@@ -118,7 +118,7 @@ class Bot {
     return atMentions.where(e => e.user != this.slack.self.id)
       .where(e => e.text && e.text.toLowerCase().match(`[^\\s]+\\s+${command}`))
       .subscribe(e => {
-        let channel = this.slack.dataStore.getChannelGroupOrDMByID(e.channel);
+        let channel = this.slack.dataStore.getChannelGroupOrDMById(e.channel);
         let tokens = e.text.split(/[\s,]+/).slice(2);
         handler(tokens, channel);
       });
@@ -181,7 +181,7 @@ class Bot {
     // user ID, constrained to `maxPlayers` number of players.
     let pollPlayers = messages.where(e => e.text && e.text.toLowerCase().match(/\byes\b|dta/i))
       .map(e => e.user)
-      .map(id => this.slack.dataStore.getUserByID(id));
+      .map(id => this.slack.dataStore.getUserById(id));
     timeExpired.connect();
 
     let addPlayers = messages//.where(e => e.user == initiator)
@@ -253,7 +253,7 @@ class Bot {
   // Returns an {Observable} that signals completion of the game 
   startGame(players, messages, channel) {
     if (!channel) {
-      players = players.map(name => this.slack.getUserByName(name));
+      players = players.map(name => this.slack.dataStore.getUserByName(name));
       messages = rx.Observable.fromEvent(this.slack, 'message').where(e => e.type === 'message');
       channel = this.channels[0];
     }
@@ -271,7 +271,7 @@ class Bot {
       .take(1)
       .subscribe(e => {
         // TODO: Should poll players to make sure they all want to quit.
-        let player = this.slack.getUserByID(e.user);
+        let player = this.slack.dataStore.getUserById(e.user);
         this.slack.sendMessage(`${M.formatAtUser(player)} has decided to quit the game.`, channel.id);
         game.endGame(`${M.formatAtUser(player)} has decided to quit the game.`);
       });
